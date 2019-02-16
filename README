@@ -1,0 +1,105 @@
+RPi audio output timing is inconsistent with USB audio device.
+--------------------------------------------------------------
+
+
+Background:
+-----------
+
+A certain application turns on a radio transmitter,
+sends some audio from a modem, and turns the transmitter off again.
+
+It has occasionally been reported that there is sometimes an inconsistent substantial 
+delay between the transmitter being turned on and the start of the audio.
+
+In my testing I found that the timing delay problem only occurs with a USB audio adapter
+connected to a Raspberry Pi.  The problem does not occur using the builtin audio
+device on the RPi.  The problem does NOT occur when using a USB audio adapter
+on an x86 desktop.
+
+Rather than opening and closing the audio output device for each transmission,
+it opens the device once when the application starts up.
+Between transmissions, the audio output device is allowed to have data underrun.
+When it time for the next transmission, it should be brought back into 
+running mode with snd_pcm_prepare.
+
+
+Test case:
+----------
+
+The enclosed test case has a small part of the original application trimmed
+down to a managable size to demonstrate this problem.
+
+My results were with a model 3B (not +) and Raspbian stretch with all the
+most recent updates as of Feb. 10, 2019.  
+
+You will need a USB audio adapter such as one of these:
+
+	https://www.adafruit.com/product/1475
+	https://www.amazon.com/external-Adapter-Windows-Microphone-SD-CM-UAUD/dp/B001MSS6CS
+
+The particular chip inside, CMedia or other,  does not seem to matter.  
+
+If nothing special is done,  the built in audio output shows up as card 0
+and the USB adapter is card 1:
+
+	pi@raspberrypi:~/audiobug1 $ aplay -l
+	**** List of PLAYBACK Hardware Devices ****
+	card 0: ALSA [bcm2835 ALSA], device 0: bcm2835 ALSA [bcm2835 ALSA]
+	  Subdevices: 7/7
+	  Subdevice #0: subdevice #0
+	  Subdevice #1: subdevice #1
+	  Subdevice #2: subdevice #2
+	  Subdevice #3: subdevice #3
+	  Subdevice #4: subdevice #4
+	  Subdevice #5: subdevice #5
+	  Subdevice #6: subdevice #6
+	card 0: ALSA [bcm2835 ALSA], device 1: bcm2835 ALSA [bcm2835 IEC958/HDMI]
+	  Subdevices: 1/1
+	  Subdevice #0: subdevice #0
+	card 1: Device [USB Audio Device], device 0: USB Audio [USB Audio]
+	  Subdevices: 1/1
+	  Subdevice #0: subdevice #0
+
+
+The enclosed test application demonstrates the very inconsistent results. 
+
+Run the enclosed test program with the card number as the command line argument.
+e.g.
+
+	./bug 0			# for built in audio
+	./bug 1			# for USB audio adapter
+
+This is what the test case does:
+
+	- Wait some number of seconds then wait for the next second boundary.
+	- Print the number of milliseconds after the second boundary.
+	- Generate audio for a quarter of a second.
+	- Wait for end of audio output (snd_pcm_drain)
+	- Print number of milliseconds after the second boundary.
+
+If you watch the screen and listen, the tone will usually start when the 0 is printed.
+the second number is generally a little over 250, which is what you would expect for a 
+quarter second tone plus some latency and overhead.
+
+Sometimes, there is a noticable delay between the 0 line being printed and start
+of the sound.  In this case we also see a substantially larger number at the tone
+end.
+
+The enclosed log capture the results from different test conditions.
+
+x86-usb.log		x86 computer, usb audio, very consistent.
+
+rpi-bcm.log 		RPi, bcm2835 audio out, also consistent.
+
+rpi-usb.log		RPi, USB audio, frequent long delays.
+
+
+The inconsistent behavior occurs only for a USB audio device on the RPi.
+
+
+The big question
+----------------
+
+Is the test program defective or does this demonstrate a genuine defect
+that should be reported to the Raspbian maintainers?
+
