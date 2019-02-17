@@ -1,0 +1,211 @@
+Audio out device: plughw:1,0
+
+ ------ spacing of 8 seconds ------ 
+
+0
+        256
+0
+        710
+                Delayed extra 460 mSec
+0
+        1164
+                Delayed extra 914 mSec
+0
+        256
+0
+        710
+                Delayed extra 460 mSec
+0
+        1164
+                Delayed extra 914 mSec
+0
+        257
+0
+        711
+                Delayed extra 461 mSec
+0
+        1165
+                Delayed extra 915 mSec
+0
+        257
+
+ ------ spacing of 9 seconds ------ 
+
+0
+        257
+0
+        257
+0
+        257
+0
+        257
+0
+        257
+0
+        257
+0
+        256
+0
+        256
+0
+        256
+0
+        256
+
+ ------ spacing of 10 seconds ------ 
+
+0
+        614
+                Delayed extra 364 mSec
+0
+        1116
+                Delayed extra 866 mSec
+0
+        256
+0
+        758
+                Delayed extra 508 mSec
+0
+        1260
+                Delayed extra 1010 mSec
+0
+        256
+0
+        758
+                Delayed extra 508 mSec
+0
+        1260
+                Delayed extra 1010 mSec
+0
+        257
+0
+        759
+                Delayed extra 509 mSec
+
+ ------ spacing of 11 seconds ------ 
+
+0
+        1213
+                Delayed extra 963 mSec
+0
+        715
+                Delayed extra 465 mSec
+0
+        257
+0
+        257
+0
+        257
+0
+        256
+0
+        256
+0
+        256
+0
+        256
+0
+        256
+
+ ------ spacing of 12 seconds ------ 
+
+0
+        256
+0
+        806
+                Delayed extra 556 mSec
+0
+        256
+0
+        806
+                Delayed extra 556 mSec
+0
+        256
+0
+        806
+                Delayed extra 556 mSec
+0
+        256
+0
+        806
+                Delayed extra 556 mSec
+0
+        257
+0
+        807
+                Delayed extra 557 mSec
+
+ ------ spacing of 13 seconds ------ 
+
+0
+        257
+0
+        257
+0
+        257
+0
+        256
+0
+        256
+0
+        256
+0
+        256
+0
+        257
+0
+        256
+0
+        256
+
+ ------ spacing of 14 seconds ------ 
+
+0
+        256
+0
+        854
+                Delayed extra 604 mSec
+0
+        256
+0
+        854
+                Delayed extra 604 mSec
+0
+        257
+0
+        855
+                Delayed extra 605 mSec
+0
+        257
+0
+        855
+                Delayed extra 605 mSec
+0
+        257
+0
+        854
+                Delayed extra 604 mSec
+
+ ------ spacing of 15 seconds ------ 
+
+0
+        260
+0
+        256
+0
+        257
+0
+        256
+0
+        256
+0
+        256
+0
+        257
+0
+        257
+0
+        257
+0
+        256
+*******************  TEST FAILED  ********************

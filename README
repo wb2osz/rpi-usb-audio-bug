@@ -27,22 +27,29 @@ Test case:
 ----------
 
 The enclosed test case has a small part of the original application trimmed
-down to a managable size to demonstrate this problem.
+down to a managable size to demonstrate this problem.  Do the following:
+
+	git clone https://github.com/wb2osz/rpi-usb-audio-bug
+	cd rpi-usb-audio-bug
+	make
+
 
 My results were with a model 3B (not +) and Raspbian stretch with all the
 most recent updates as of Feb. 10, 2019.  
 
-You will need a USB audio adapter such as one of these:
+To run the test, you will need a USB audio adapter such as one of these:
 
 	https://www.adafruit.com/product/1475
+		(Generalplus Technology Inc.  1b3f 2008)
 	https://www.amazon.com/external-Adapter-Windows-Microphone-SD-CM-UAUD/dp/B001MSS6CS
+		(CMedia CM119  0d8c 0008)
 
-The particular chip inside, CMedia or other,  does not seem to matter.  
+The particular chip inside, CMedia or other, does not seem to matter.  
 
 If nothing special is done,  the built in audio output shows up as card 0
 and the USB adapter is card 1:
 
-	pi@raspberrypi:~/audiobug1 $ aplay -l
+	aplay -l
 	**** List of PLAYBACK Hardware Devices ****
 	card 0: ALSA [bcm2835 ALSA], device 0: bcm2835 ALSA [bcm2835 ALSA]
 	  Subdevices: 7/7
@@ -56,7 +63,7 @@ and the USB adapter is card 1:
 	card 0: ALSA [bcm2835 ALSA], device 1: bcm2835 ALSA [bcm2835 IEC958/HDMI]
 	  Subdevices: 1/1
 	  Subdevice #0: subdevice #0
-	card 1: Device [USB Audio Device], device 0: USB Audio [USB Audio]
+	card 1: Device [C-Media USB Audio Device], device 0: USB Audio [USB Audio]
 	  Subdevices: 1/1
 	  Subdevice #0: subdevice #0
 
@@ -72,33 +79,47 @@ e.g.
 This is what the test case does:
 
 	- Wait some number of seconds then wait for the next second boundary.
-	- Print the number of milliseconds after the second boundary.
-	- Generate audio for a quarter of a second.
+	- Print the number of milliseconds after the second boundary. (should be 0)
+	- Generate audio tone for a quarter of a second.
 	- Wait for end of audio output (snd_pcm_drain)
-	- Print number of milliseconds after the second boundary.
+	- Print number of milliseconds elapsed since the start of the tone.
 
 If you watch the screen and listen, the tone will usually start when the 0 is printed.
-the second number is generally a little over 250, which is what you would expect for a 
+The elapsed time is generally a little over 250, which is what you would expect for a 
 quarter second tone plus some latency and overhead.
 
 Sometimes, there is a noticable delay between the 0 line being printed and start
-of the sound.  In this case we also see a substantially larger number at the tone
-end.
+of the sound.  In this case we also see a much larger elapsed time.
 
-The enclosed log capture the results from different test conditions.
+The follwing files capture the results from different test conditions.
 
 x86-usb.log		x86 computer, usb audio, very consistent.
 
 rpi-bcm.log 		RPi, bcm2835 audio out, also consistent.
 
-rpi-usb.log		RPi, USB audio, frequent long delays.
+rpi-usb-gt.log		RPi, USB audio, Generalplus Technology, frequent long delays.
+
+rpi-usb-119.log		RPi, USB audio, CMedia CM119, frequent long delays.
 
 
 The inconsistent behavior occurs only for a USB audio device on the RPi.
 
 
-The big question
-----------------
+Observations:
+-------------
+
+The delays seem to be random at first but some interesting patterns
+emerge.
+
+- The problem is more likely to occur with an even number of seconds
+  between the tones.  
+
+- The delays before the start of the tone are not entirely random.
+  Numbers are often in a 1:2 ratio.
+
+
+The big question:
+-----------------
 
 Is the test program defective or does this demonstrate a genuine defect
 that should be reported to the Raspbian maintainers?

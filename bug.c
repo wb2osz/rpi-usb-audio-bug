@@ -26,6 +26,7 @@ int main (int argc, char *argv[])
         struct timeval tv;
 	int card_number;
 	int error_count = 0;
+	int start_sec;
 
 
 	if (argc == 2) {
@@ -47,6 +48,7 @@ int main (int argc, char *argv[])
 
 	audio_config.num_channels = 1;
 	audio_config.samples_per_sec = 44100;
+	//audio_config.samples_per_sec = 48000;  // Same result.
 	audio_config.bits_per_sample = 16;
 
 
@@ -87,6 +89,7 @@ int main (int argc, char *argv[])
 
 // Send 1/4 sec of 700 Hz.
 
+	  start_sec = (int)tv.tv_sec;
 	  printf ("%d\n", (int)tv.tv_usec / 1000);
 	  int k;
 	  int f = 700;
@@ -102,14 +105,19 @@ int main (int argc, char *argv[])
           audio_wait (0);
 
 // We expect 1/4 second elapsed time since the start of the tone.
+// (Or more accurately, from the time we told the operating system to start producing audio.)
+// As we demonstrate, here, there is often a delay from when we tell the operating system
+// to produce sound and when it actually starts coming out.
 
           gettimeofday (&tv, NULL);
-	  printf ("        %d\n", (int)tv.tv_usec / 1000);
-	  if ((int)tv.tv_usec / 1000 > 300) {
-	    printf ("                Delayed!\n");
+
+	  int elapsed = (tv.tv_sec - start_sec) * 1000 + (int)tv.tv_usec / 1000;
+	  printf ("        %d\n", elapsed);
+	  if (elapsed > 300) {
+	    printf ("                Delayed extra %d mSec\n", elapsed - 250);
 	    error_count++;
 	  }
-	  if ((int)tv.tv_usec / 1000 < 200) {
+	  if (elapsed < 200) {
 	    printf ("                Too short!\n");
 	    error_count++;
 	  }
