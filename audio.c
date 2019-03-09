@@ -148,6 +148,8 @@ static int set_alsa_params (snd_pcm_t *handle, struct audio_s *pa, char *devname
 	int buf_size_in_bytes;			/* result, number of bytes per transfer. */
 
 
+// Could we shorten this by setting many parameters at once with snd_pcm_set_params ?
+
 	err = snd_pcm_hw_params_malloc (&hw_params);
 	if (err < 0) {
 	  printf ("Could not alloc hw param structure.\n%s\n", 
@@ -314,6 +316,8 @@ static int set_alsa_params (snd_pcm_t *handle, struct audio_s *pa, char *devname
 	  printf ("Using %d to attempt recovery.\n", buf_size_in_bytes);
 	}
 
+	printf ("Debug: audio buffer size is %d bytes.\n", buf_size_in_bytes);
+
 	return (buf_size_in_bytes);
 
 
@@ -382,43 +386,21 @@ int audio_flush (int a)
 	assert (adev.audio_out_handle != NULL);
 
 
-/*
- * Trying to set the automatic start threshold didn't have the desired
- * effect.  After the first transmitted packet, they are saved up
- * for a few minutes and then all come out together.
- *
- * "Prepare" it if not already in the running state.
- * We stop it at the end of each transmitted packet.
- */
 
+// No point in writing 0 length buffer.
 
-	snd_pcm_status_alloca(&status);
-
-	k = snd_pcm_status (adev.audio_out_handle, status);
-	if (k != 0) {
-	  printf ("Audio output get status error.\n%s\n", snd_strerror(k));
+	if (adev.outbuf_len == 0) {
+	  return (0);
 	}
-
-	if ((k = snd_pcm_status_get_state(status)) != SND_PCM_STATE_RUNNING) {
-
-// FIXME remove debug.
-
-	  //printf ("Audio output state = %d.  Try to start.\n", k);
-	  //double b4 = dtime_now();
-
-	  k = snd_pcm_prepare (adev.audio_out_handle);
-
-	  //printf ("snd_pcm_prepare took %.3f seconds.\n", dtime_now() - b4);
-
-	  if (k != 0) {
-	    printf ("Audio output start error.\n%s\n", snd_strerror(k));
-	  }
-	}
-
 
 	psound = adev.outbuf_ptr;
 
 	while (retries-- > 0) {
+
+// Various tutorials say snd_pcm_prepare should be used to get things going again
+// when writei returns a value less than 0.
+// Here I tried to break it down into the specific expected errors, to get a
+// better understanding of what was going on, instead of lumping them together.
 
 	  k = snd_pcm_writei (adev.audio_out_handle, psound, adev.outbuf_len / adev.bytes_per_frame);	
 #if DEBUGx
@@ -427,6 +409,16 @@ int audio_flush (int a)
 	  fflush (stdout);	
 #endif
 	  if (k == -EPIPE) {
+
+// I've never encountered this error code.
+// The application unconditionally prints an error which no one has ever mentioned.
+// This should be useful for -EINTR, -EPIPE, and -ESTRIPE error conditions.
+// https://www.alsa-project.org/alsa-doc/alsa-lib/group___p_c_m.html#ga2157aaeb6fc14da3f040d76591f9d3b1
+// Not sure where I got the idea to use recover.
+// Probably doesn't matter because we never end up here anyhow.
+
+// We always find -EBADFD.
+
 	    printf ("Audio output data underrun.\n");
 
 	    /* No problemo.  Recover and go around again. */
@@ -435,9 +427,15 @@ int audio_flush (int a)
 	  }
           else if (k == -ESTRPIPE) {
             printf ("Driver suspended, recovering\n");
-            snd_pcm_recover(adev.audio_out_handle, k, 1);
+            snd_pcm_recover(adev.audio_out_handle, k, 0);
           }
           else if (k == -EBADFD) {
+
+// This is caused by not being in the PREPARED or RUNNING state.
+// We get here once for each tone generated after a period of inactivity.
+// If don't believe me, uncomment the following line.
+
+            //printf ("\t\tDebug: calling snd_pcm_prepare\n");
             k = snd_pcm_prepare (adev.audio_out_handle);
             if(k < 0) {
               printf ("Error preparing after bad state: %s\n", snd_strerror(k));
